@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Local</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-main: #131314;
+            --bg-sidebar: #1e1f20;
+            --bg-input: #1e1f20;
+            --text-main: #e3e3e3;
+            --accent: #8ab4f8;
+            --user-bubble: #2b2c2f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Barre Latérale --- */
+        #sidebar {
+            width: 260px;
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            justify-content: space-between;
+            border-right: 1px solid #3c4043;
+        }
+
+        .user-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: var(--accent);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f28b82;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover { background: rgba(242, 139, 130, 0.1); }
+
+        /* --- Zone de Chat --- */
+        #chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem 15%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Styles des Messages */
+        .message {
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .message.user { align-self: flex-end; align-items: flex-end; }
+        .message.bot { align-self: flex-start; align-items: flex-start; }
+
+        .bubble {
+            padding: 12px 20px;
+            border-radius: 18px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .user .bubble { background: var(--user-bubble); border: 1px solid #3c4043; }
+        .bot .bubble { background: transparent; padding-left: 0; }
+
+        /* --- Saisie (Input Area) --- */
+        .input-area {
+            padding: 20px 15%;
+            background: linear-gradient(transparent, var(--bg-main) 20%);
+        }
+
+        .input-wrapper {
+            background: var(--bg-input);
+            border-radius: 32px;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid transparent;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .input-wrapper:focus-within { border: 1px solid #5f6368; }
+
+        input#user-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            padding: 12px 0;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: #c4c7c5;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover { background: #3c4043; color: white; }
+
+        /* Preview Fichier */
+        #file-preview {
+            display: none;
+            padding: 10px 15%;
+            gap: 10px;
+        }
+
+        .file-tag {
+            background: #3c4043;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="user-info">
+        <h3>Chatbot Local</h3>
+        <p style="font-size: 0.9rem; color: #9aa0a6;">Connecté en tant que :<br><strong>{{ username }}</strong></p>
+    </div>
+    
+    <div class="nav-links">
+        </div>
+
+    <a href="/logout" class="logout-btn">
+        <i data-lucide="log-out" size="18"></i> Déconnexion
+    </a>
+</div>
+
+<div id="chat-container">
+    <div id="chat-history">
+        {% for msg in history %}
+            <div class="message {{ msg.role }}">
+                <div class="bubble">{{ msg.content }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div id="file-preview"></div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <label class="btn-icon">
+                <i data-lucide="plus"></i>
+                <input type="file" id="file-input" hidden onchange="handleFile(this)">
+            </label>
+            
+            <input type="text" id="user-input" placeholder="Demandez à Ministral..." onkeypress="if(event.key==='Enter') sendMessage()">
+            
+            <button class="btn-icon" onclick="sendMessage()">
+                <i data-lucide="send-horizontal"></i>
+            </button>
+        </div>
+        <p style="text-align: center; font-size: 11px; color: #9aa0a6; margin-top: 10px;">
+            Ministral peut faire des erreurs. Envisagez de vérifier les informations importantes.
+        </p>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+    let currentFileText = "";
+
+    // Scroll auto vers le bas au chargement
+    const historyDiv = document.getElementById("chat-history");
+    historyDiv.scrollTop = historyDiv.scrollHeight;
+
+    async function handleFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const preview = document.getElementById('file-preview');
+        preview.style.display = 'flex';
+        preview.innerHTML = `<div class="file-tag"><i data-lucide="file-text" size="14"></i> ${file.name}</div>`;
+        lucide.createIcons();
+
+        const reader = new FileReader();
+        reader.onload = (e) => { currentFileText = e.target.result; };
+        reader.readAsText(file);
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById("user-input");
+        const text = input.value.trim();
+        if (!text && !currentFileText) return;
+
+        addMessage(text, "user");
+        input.value = "";
+        
+        let messageToSend = text;
+        if (currentFileText) {
+            messageToSend = `[DOCUMENT ATTACHÉ]\n${currentFileText}\n\nQUESTION: ${text}`;
+            currentFileText = "";
+            document.getElementById('file-preview').style.display = 'none';
+        }
+
+        const botMsgDiv = addMessage("En train de réfléchir...", "bot");
+        const bubble = botMsgDiv.querySelector('.bubble');
+
+        try {
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: messageToSend})
+            });
+
+            const data = await response.json();
+            bubble.innerText = data.response;
+        } catch (e) {
+            bubble.innerText = "Erreur : Impossible de contacter le serveur Ollama.";
+        }
+        
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+    }
+
+    function addMessage(text, type) {
+        const div = document.createElement("div");
+        div.className = `message ${type}`;
+        div.innerHTML = `<div class="bubble">${text}</div>`;
+        historyDiv.appendChild(div);
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+        return div;
+    }
+</script>
+
+</body>
+</html>

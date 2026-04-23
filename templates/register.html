@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription Chatbot Local</title>
+    <style>
+        body {
+            background: #131314;
+            color: #e3e3e3;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .auth-card {
+            background: #1e1f20;
+            padding: 40px;
+            border-radius: 28px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 24px;
+        }
+
+        p {
+            color: #c4c7c5;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            background: #131314;
+            border: 1px solid #3c4043;
+            border-radius: 12px;
+            color: white;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #8ab4f8;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #a8c7fa;
+            color: #062e6f;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #c2e7ff;
+        }
+
+        .footer-link {
+            margin-top: 25px;
+            font-size: 14px;
+        }
+
+        .footer-link a {
+            color: #8ab4f8;
+            text-decoration: none;
+        }
+
+        .flash-message {
+            background: #f28b822e;
+            color: #f28b82;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+    <h2>Créer un compte</h2>
+    <p>Rejoignez votre instance locale de Chatbot Local</p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash-message">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Nom d'utilisateur</label>
+            <input type="text" name="username" placeholder="ex: prenom.nom@domaine.com" required autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>Mot de passe</label>
+            <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit">S'inscrire</button>
+    </form>
+
+    <div class="footer-link">
+        Déjà un compte ? <a href="/login">Se connecter</a>
+    </div>
+</div>
+
+</body>
+</html>
